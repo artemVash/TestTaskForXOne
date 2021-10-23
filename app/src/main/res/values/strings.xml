@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">TestTaskForXOne</string>
+    <string name="title_setting">Setting</string>
+    <string name="title_money">Money</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_location">Location</string>
+</resources>
