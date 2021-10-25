@@ -4,4 +4,6 @@
     <string name="title_money">Money</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_location">Location</string>
+    <string name="location">локации</string>
+
 </resources>
