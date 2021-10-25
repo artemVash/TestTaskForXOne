@@ -1,0 +1,1003 @@
+Index: app/src/main/res/layout/fragment_location.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/fragment_location.xml	(revision 9c4a5e5270d99e275f537dca52e9aea45a9825f7)
++++ app/src/main/res/layout/fragment_location.xml	(date 1635153544594)
+@@ -1,31 +1,83 @@
+ <?xml version="1.0" encoding="utf-8"?>
+-<androidx.constraintlayout.widget.ConstraintLayout
+-    xmlns:android="http://schemas.android.com/apk/res/android"
++<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     android:layout_width="match_parent"
+-    android:layout_height="match_parent">
++    android:layout_height="match_parent"
++    xmlns:tools="http://schemas.android.com/tools"
++    android:background="@color/bg_color_fragment_location">
+ 
+     <ImageView
+         android:id="@+id/imageView"
+         android:layout_width="280dp"
+         android:layout_height="wrap_content"
+-        android:layout_marginTop="30dp"
++        android:layout_marginTop="20dp"
+         android:src="@drawable/ic_location_bg"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintTop_toTopOf="parent" />
+ 
+     <TextView
++        android:id="@+id/textView"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:fontFamily="@font/oswald_light"
+         android:text="локации"
+-        android:textSize="40sp"
+         android:textColor="@color/black"
++        android:textSize="40sp"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintTop_toTopOf="@+id/imageView" />
+ 
++    <LinearLayout
++        android:id="@+id/linearLayout"
++        android:layout_width="match_parent"
++        android:layout_height="70dp"
++        android:background="@drawable/bg_item_collection_recycler"
++        android:elevation="40dp"
++        android:gravity="center"
++        app:layout_constraintTop_toBottomOf="@+id/imageView">
++
++        <EditText
++            android:id="@+id/name_collection"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_margin="10dp"
++            android:background="@drawable/bg_edittext_collection_recycler"
++            android:fontFamily="@font/oswald_light"
++            android:gravity="center"
++            android:textSize="25sp"
++            app:layout_constraintBottom_toBottomOf="parent"
++            app:layout_constraintEnd_toEndOf="parent"
++            app:layout_constraintStart_toStartOf="parent"
++            app:layout_constraintTop_toTopOf="parent"
++            tools:text="Улицы" />
++
++    </LinearLayout>
++
++    <Button
++        android:id="@+id/add_location"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:layout_margin="20dp"
++        android:text="add"
++        app:layout_constraintBottom_toBottomOf="parent"
++        app:layout_constraintEnd_toEndOf="parent" />
++
++
++    <androidx.recyclerview.widget.RecyclerView
++        android:id="@+id/location_container"
++        android:layout_width="0dp"
++        android:layout_height="0dp"
++        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
++        app:layout_constraintBottom_toBottomOf="parent"
++        app:layout_constraintEnd_toEndOf="parent"
++        app:layout_constraintStart_toStartOf="parent"
++        app:layout_constraintTop_toBottomOf="@+id/linearLayout"
++        tools:listitem="@layout/item_location_recycler"/>
++
++
++
++
+ 
+ 
+ </androidx.constraintlayout.widget.ConstraintLayout>
+\ No newline at end of file
+Index: app/src/main/java/by/vashkevich/testtaskforxone/ui/location/LocationFragment.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/by/vashkevich/testtaskforxone/ui/location/LocationFragment.kt	(revision 9c4a5e5270d99e275f537dca52e9aea45a9825f7)
++++ app/src/main/java/by/vashkevich/testtaskforxone/ui/location/LocationFragment.kt	(date 1635172661041)
+@@ -1,16 +1,32 @@
+ package by.vashkevich.testtaskforxone.ui.location
+ 
++import android.app.Activity
++import android.content.Intent
+ import android.os.Bundle
++import android.util.Log
+ import android.view.LayoutInflater
+ import android.view.View
+ import android.view.ViewGroup
++import android.widget.Button
++import android.widget.EditText
++import android.widget.TextView
++import androidx.activity.result.contract.ActivityResultContracts
++import androidx.core.widget.doAfterTextChanged
+ import androidx.fragment.app.Fragment
+ import androidx.lifecycle.ViewModelProvider
++import androidx.recyclerview.widget.RecyclerView
+ import by.vashkevich.testtaskforxone.R
+-import java.security.Provider
++import by.vashkevich.testtaskforxone.adapter.AdapterLocation
++import by.vashkevich.testtaskforxone.model.PathLocation
++import by.vashkevich.testtaskforxone.utilits.LOCATE_COLLECTION
++import by.vashkevich.testtaskforxone.utilits.MAIN_COLLECTION
++import by.vashkevich.testtaskforxone.utilits.MAIN_DOCUMENT
++import by.vashkevich.testtaskforxone.utilits.NAME_PARAMS
+ 
+ class LocationFragment : Fragment() {
+ 
++    lateinit var  locationAdapter : AdapterLocation
++
+     private val locationViewModel by lazy {
+         ViewModelProvider(requireActivity()).get(LocationViewModel::class.java)
+     }
+@@ -21,5 +37,69 @@
+ 
+     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+         super.onViewCreated(view, savedInstanceState)
++
++        locationViewModel.getObjectAllCollection(MAIN_COLLECTION, MAIN_DOCUMENT, LOCATE_COLLECTION)
++        locationViewModel.getNameCollection(MAIN_COLLECTION, MAIN_DOCUMENT)
++
++        //control change name collection
++        val nameCollection = view.findViewById<EditText>(R.id.name_collection)
++
++        nameCollection.doAfterTextChanged {
++            locationViewModel.redactNameCollection(MAIN_COLLECTION, MAIN_DOCUMENT, mapOf(NAME_PARAMS to nameCollection.text.toString()))
++        }
++
++        locationViewModel.nameCollection.observe(requireActivity()){
++            nameCollection.setText(it, TextView.BufferType.EDITABLE)
++        }
++
++        //add new collection
++        val buttonAdd = view.findViewById<Button>(R.id.add_location)
++        buttonAdd.setOnClickListener {
++
++            val newNameLocation = locationViewModel.createNameLocation()
++
++            locationViewModel.writeNewLocation(
++                MAIN_COLLECTION,
++                MAIN_DOCUMENT,
++                LOCATE_COLLECTION,
++                newNameLocation,
++                PathLocation("", MAIN_COLLECTION, MAIN_DOCUMENT, LOCATE_COLLECTION, newNameLocation)
++            )
++            locationViewModel.getObjectAllCollection(
++                MAIN_COLLECTION,
++                MAIN_DOCUMENT,
++                LOCATE_COLLECTION
++            )
++        }
++
++        //recycler
++        val recLocation = view.findViewById<RecyclerView>(R.id.location_container)
++
++        locationViewModel.allObjectCollection.observe(requireActivity()){
++
++            locationAdapter = AdapterLocation(it, locationViewModel)
++            recLocation.adapter = locationAdapter
++            locationAdapter.notifyDataSetChanged()
++        }
++
++
++
++        val v = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result ->
++            if (result.resultCode == Activity.RESULT_OK){
++                Log.e("MyLog", result.data.toString())
++            }
++        }
++
++
++
++
++
++        fun someActivityResult(){
++            val intent = Intent()
++            intent.type = "image/*"
++            intent.action = Intent.ACTION_GET_CONTENT
++            v.launch(intent)
++        }
++
+     }
+ }
+\ No newline at end of file
+Index: app/src/main/res/layout/activity_main.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/activity_main.xml	(revision 9c4a5e5270d99e275f537dca52e9aea45a9825f7)
++++ app/src/main/res/layout/activity_main.xml	(date 1635081011085)
+@@ -3,8 +3,7 @@
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     android:id="@+id/container"
+     android:layout_width="match_parent"
+-    android:layout_height="match_parent"
+-    android:paddingTop="?attr/actionBarSize">
++    android:layout_height="match_parent">
+ 
+     <com.google.android.material.bottomnavigation.BottomNavigationView
+         android:id="@+id/nav_view"
+@@ -22,7 +21,7 @@
+         android:id="@+id/nav_host_fragment"
+         android:name="androidx.navigation.fragment.NavHostFragment"
+         android:layout_width="match_parent"
+-        android:layout_height="match_parent"
++        android:layout_height="0dp"
+         app:defaultNavHost="true"
+         app:layout_constraintBottom_toTopOf="@id/nav_view"
+         app:layout_constraintLeft_toLeftOf="parent"
+Index: app/src/main/res/drawable/bg_item_collection_recycler.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/drawable/bg_item_collection_recycler.xml	(date 1635018017779)
++++ app/src/main/res/drawable/bg_item_collection_recycler.xml	(date 1635018017779)
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<shape xmlns:android="http://schemas.android.com/apk/res/android">
++
++    <solid android:color="@color/white" />
++    <corners android:radius="10dp"/>
++
++</shape>
+\ No newline at end of file
+Index: app/src/main/res/drawable/bg_edittext_collection_recycler.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/drawable/bg_edittext_collection_recycler.xml	(date 1635039458419)
++++ app/src/main/res/drawable/bg_edittext_collection_recycler.xml	(date 1635039458419)
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<shape xmlns:android="http://schemas.android.com/apk/res/android">
++
++    <solid android:color="@color/blue" />
++    <gradient android:type="radial" android:endColor="@color/grey" android:startColor="@color/blue" android:gradientRadius="5000%p"/>
++    <corners android:radius="8dp"/>
++
++</shape>
+\ No newline at end of file
+Index: app/src/main/java/by/vashkevich/testtaskforxone/adapter/AdapterLocation.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/by/vashkevich/testtaskforxone/adapter/AdapterLocation.kt	(date 1635156107476)
++++ app/src/main/java/by/vashkevich/testtaskforxone/adapter/AdapterLocation.kt	(date 1635156107476)
+@@ -0,0 +1,60 @@
++package by.vashkevich.testtaskforxone.adapter
++
++import android.view.LayoutInflater
++import android.view.View
++import android.view.ViewGroup
++import android.widget.EditText
++import android.widget.TextView
++import androidx.core.widget.doAfterTextChanged
++import androidx.recyclerview.widget.RecyclerView
++import by.vashkevich.testtaskforxone.R
++import by.vashkevich.testtaskforxone.model.PathLocation
++import by.vashkevich.testtaskforxone.ui.location.LocationViewModel
++import by.vashkevich.testtaskforxone.utilits.LOCATE_COLLECTION
++import by.vashkevich.testtaskforxone.utilits.MAIN_COLLECTION
++import by.vashkevich.testtaskforxone.utilits.MAIN_DOCUMENT
++import by.vashkevich.testtaskforxone.utilits.NAME_PARAMS
++
++class AdapterLocation(
++    val list: List<PathLocation>,
++    val viewModel : LocationViewModel
++) : RecyclerView.Adapter<AdapterLocation.ItemViewHolder>() {
++
++ inner class ItemViewHolder(private val view : View) : RecyclerView.ViewHolder(view){
++
++     fun setData(itemView : View,position : Int){
++
++         val data = list[position]
++
++         val textNameLocation = itemView.findViewById<EditText>(R.id.name_Location)
++         textNameLocation.setText(data.name, TextView.BufferType.EDITABLE)
++
++
++         textNameLocation.doAfterTextChanged {
++             val newPathLocation = PathLocation(textNameLocation.text.toString(), MAIN_COLLECTION,
++                 MAIN_DOCUMENT, LOCATE_COLLECTION,data.document)
++
++             data.document?.let {
++                 viewModel.redactNameLocation(
++                     MAIN_COLLECTION, MAIN_DOCUMENT, LOCATE_COLLECTION, it,
++                     newPathLocation)
++             }
++         }
++     }
++
++ }
++
++    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
++        val view = LayoutInflater.from(parent.context)
++            .inflate(R.layout.item_location_recycler,parent,false)
++        return ItemViewHolder(view)
++    }
++
++    override fun onBindViewHolder(holder: ItemViewHolder, position: Int) {
++       holder.setData(holder.itemView, position)
++    }
++
++    override fun getItemCount(): Int {
++        return list.size
++    }
++}
+\ No newline at end of file
+Index: app/src/main/java/by/vashkevich/testtaskforxone/MainActivity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/by/vashkevich/testtaskforxone/MainActivity.kt	(revision 9c4a5e5270d99e275f537dca52e9aea45a9825f7)
++++ app/src/main/java/by/vashkevich/testtaskforxone/MainActivity.kt	(date 1635030679771)
+@@ -13,14 +13,11 @@
+     override fun onCreate(savedInstanceState: Bundle?) {
+         super.onCreate(savedInstanceState)
+         setContentView(R.layout.activity_main)
++
+         val navView: BottomNavigationView = findViewById(R.id.nav_view)
+ 
+         val navController = findNavController(R.id.nav_host_fragment)
+-        // Passing each menu ID as a set of Ids because each
+-        // menu should be considered as top level destinations.
+-        val appBarConfiguration = AppBarConfiguration(setOf(
+-                R.id.navigation_location, R.id.navigation_dashboard, R.id.navigation_money,R.id.navigation_setting))
+-        setupActionBarWithNavController(navController, appBarConfiguration)
+         navView.setupWithNavController(navController)
++
+     }
+ }
+\ No newline at end of file
+Index: app/src/main/res/values/colors.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/values/colors.xml	(revision 9c4a5e5270d99e275f537dca52e9aea45a9825f7)
++++ app/src/main/res/values/colors.xml	(date 1635039591905)
+@@ -7,4 +7,8 @@
+     <color name="teal_700">#FF018786</color>
+     <color name="black">#FF000000</color>
+     <color name="white">#FFFFFFFF</color>
++    <color name="blue">#E3F2F4</color>
++    <color name="bg_color_fragment_location">#BEFBF3EE</color>
++    <color name="grey">#353535</color>
++
+ </resources>
+\ No newline at end of file
+Index: app/src/main/java/by/vashkevich/testtaskforxone/adapter/AdapterImage.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/by/vashkevich/testtaskforxone/adapter/AdapterImage.kt	(date 1635172430388)
++++ app/src/main/java/by/vashkevich/testtaskforxone/adapter/AdapterImage.kt	(date 1635172430388)
+@@ -0,0 +1,39 @@
++package by.vashkevich.testtaskforxone.adapter
++
++import android.content.Context
++import android.view.LayoutInflater
++import android.view.View
++import android.view.ViewGroup
++import android.widget.BaseAdapter
++
++class AdapterImage(
++    val context : Context,
++    val list:List<String>
++) : BaseAdapter() {
++
++    override fun getCount(): Int {
++        return list.size
++    }
++
++    override fun getItem(position: Int): Any {
++       return list[position]
++    }
++
++    override fun getItemId(position: Int): Long {
++        return position.toLong()
++    }
++
++    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
++
++        var grid = View(context)
++
++        if (convertView == null){
++            grid = View(context)
++
++            var inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
++//            inflater.inflate()
++
++        }
++        return  grid
++    }
++}
+\ No newline at end of file
+Index: app/src/main/res/font/ubuntu_light.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/font/ubuntu_light.xml	(date 1635022946909)
++++ app/src/main/res/font/ubuntu_light.xml	(date 1635022946909)
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<font-family xmlns:app="http://schemas.android.com/apk/res-auto"
++        app:fontProviderAuthority="com.google.android.gms.fonts"
++        app:fontProviderPackage="com.google.android.gms"
++        app:fontProviderQuery="name=Ubuntu&amp;weight=300"
++        app:fontProviderCerts="@array/com_google_android_gms_fonts_certs">
++</font-family>
+Index: app/src/main/res/layout/item_location_recycler.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/item_location_recycler.xml	(date 1635095960631)
++++ app/src/main/res/layout/item_location_recycler.xml	(date 1635095960631)
+@@ -0,0 +1,37 @@
++<?xml version="1.0" encoding="utf-8"?>
++<androidx.constraintlayout.widget.ConstraintLayout
++    xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:tools="http://schemas.android.com/tools"
++    android:layout_width="match_parent"
++    android:layout_height="250dp"
++    android:background="@drawable/bg_item_collection_recycler"
++    android:layout_marginTop="15dp"
++    android:elevation="15dp"
++    android:layout_marginBottom="10dp">
++
++    <LinearLayout
++        android:layout_width="match_parent"
++        android:layout_height="match_parent"
++        android:layout_margin="15dp"
++        android:orientation="vertical"
++        android:background="@drawable/bg_edittext_collection_recycler">
++
++        <EditText
++            android:id="@+id/name_Location"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:textColor="@color/black"
++            android:fontFamily="@font/oswald_light"
++            android:gravity="center"
++            android:hint="название локации"
++            />
++
++        <GridLayout
++            android:layout_width="match_parent"
++            android:layout_height="match_parent"/>
++
++    </LinearLayout>
++
++
++
++</androidx.constraintlayout.widget.ConstraintLayout>
+\ No newline at end of file
+Index: app/src/main/res/values/preloaded_fonts.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/values/preloaded_fonts.xml	(revision 9c4a5e5270d99e275f537dca52e9aea45a9825f7)
++++ app/src/main/res/values/preloaded_fonts.xml	(date 1635022946928)
+@@ -3,5 +3,6 @@
+     <array name="preloaded_fonts" translatable="false">
+         <item>@font/oswald</item>
+         <item>@font/oswald_light</item>
++        <item>@font/ubuntu_light</item>
+     </array>
+ </resources>
+Index: app/src/main/java/by/vashkevich/testtaskforxone/utilits/firebaseHalper.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/by/vashkevich/testtaskforxone/utilits/firebaseHalper.kt	(date 1635166598149)
++++ app/src/main/java/by/vashkevich/testtaskforxone/utilits/firebaseHalper.kt	(date 1635166598149)
+@@ -0,0 +1,10 @@
++package by.vashkevich.testtaskforxone.utilits
++
++
++const val MAIN_COLLECTION = "streets"
++const val MAIN_DOCUMENT  = "streetsDoc"
++const val LOCATE_COLLECTION = "secondCollection"
++
++const val NAME_PARAMS = "name"
++
++const val NEW_NAME_LOCATION = "documentLocation"
+Index: app/src/main/java/by/vashkevich/testtaskforxone/model/PathLocation.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/by/vashkevich/testtaskforxone/model/PathLocation.kt	(date 1635093450020)
++++ app/src/main/java/by/vashkevich/testtaskforxone/model/PathLocation.kt	(date 1635093450020)
+@@ -0,0 +1,10 @@
++package by.vashkevich.testtaskforxone.model
++
++data class PathLocation(
++    val name : String? = null,
++    val collectionMain : String? = null,
++    val documentMain : String? = null,
++    val collection : String? = null,
++    val document : String? = null
++) {
++}
+\ No newline at end of file
+Index: app/src/main/res/values/themes.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/values/themes.xml	(revision 9c4a5e5270d99e275f537dca52e9aea45a9825f7)
++++ app/src/main/res/values/themes.xml	(date 1635013262301)
+@@ -1,6 +1,6 @@
+ <resources xmlns:tools="http://schemas.android.com/tools">
+     <!-- Base application theme. -->
+-    <style name="Theme.TestTaskForXOne" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
++    <style name="Theme.TestTaskForXOne" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+         <!-- Primary brand color. -->
+         <item name="colorPrimary">@color/purple_500</item>
+         <item name="colorPrimaryVariant">@color/purple_700</item>
+Index: build.gradle
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- build.gradle	(revision 9c4a5e5270d99e275f537dca52e9aea45a9825f7)
++++ build.gradle	(date 1635013924546)
+@@ -8,6 +8,7 @@
+     dependencies {
+         classpath "com.android.tools.build:gradle:4.1.3"
+         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
++        classpath 'com.google.gms:google-services:4.3.10'
+ 
+         // NOTE: Do not place your application dependencies here; they belong
+         // in the individual module build.gradle files
+Index: app/build.gradle
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/build.gradle	(revision 9c4a5e5270d99e275f537dca52e9aea45a9825f7)
++++ app/build.gradle	(date 1635031587821)
+@@ -1,6 +1,7 @@
+ plugins {
+     id 'com.android.application'
+     id 'kotlin-android'
++    id 'com.google.gms.google-services'
+ }
+ 
+ android {
+@@ -39,13 +40,23 @@
+     implementation 'androidx.appcompat:appcompat:1.3.1'
+     implementation 'com.google.android.material:material:1.4.0'
+     implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
+-    implementation 'androidx.navigation:navigation-fragment:2.3.5'
+-    implementation 'androidx.navigation:navigation-ui:2.3.5'
+-    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.3.1'
+-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1'
+     implementation 'androidx.navigation:navigation-fragment-ktx:2.3.5'
+     implementation 'androidx.navigation:navigation-ui-ktx:2.3.5'
++
++
+     testImplementation 'junit:junit:4.+'
+     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
++
++    //architecture components
++    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.3.1'
++    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1'
++
++    //firebase
++    implementation 'com.google.firebase:firebase-firestore-ktx:23.0.4'
++    implementation 'com.google.firebase:firebase-database-ktx:20.0.2'
++    implementation 'com.google.firebase:firebase-storage-ktx:20.0.0'
++    
++    //coroutines
++    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0'
+ }
+\ No newline at end of file
+Index: app/src/main/java/by/vashkevich/testtaskforxone/firebase/repository/RepositoryFirebase.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/by/vashkevich/testtaskforxone/firebase/repository/RepositoryFirebase.kt	(date 1635172661028)
++++ app/src/main/java/by/vashkevich/testtaskforxone/firebase/repository/RepositoryFirebase.kt	(date 1635172661028)
+@@ -0,0 +1,72 @@
++package by.vashkevich.testtaskforxone.firebase.repository
++
++import by.vashkevich.testtaskforxone.firebase.request.RequestFirebase
++import by.vashkevich.testtaskforxone.model.PathLocation
++import by.vashkevich.testtaskforxone.utilits.LOCATE_COLLECTION
++import by.vashkevich.testtaskforxone.utilits.MAIN_COLLECTION
++import by.vashkevich.testtaskforxone.utilits.MAIN_DOCUMENT
++import by.vashkevich.testtaskforxone.utilits.NAME_PARAMS
++import com.google.android.gms.tasks.Task
++import com.google.firebase.database.ktx.database
++import com.google.firebase.firestore.DocumentSnapshot
++import com.google.firebase.firestore.Query
++import com.google.firebase.firestore.QuerySnapshot
++import com.google.firebase.firestore.ktx.firestore
++import com.google.firebase.ktx.Firebase
++import kotlinx.coroutines.CoroutineScope
++import kotlinx.coroutines.Dispatchers
++import kotlinx.coroutines.withContext
++
++class RepositoryFirebase : RequestFirebase {
++
++    private val firebaseStore = Firebase.firestore
++    private val firebaseDatabase = Firebase.database
++    private val myRef = firebaseDatabase.reference
++    private val ioScope = CoroutineScope(Dispatchers.IO)
++
++    override suspend fun writeNewLocation(
++        mainCollectionChild: String,
++        mainDocumentChild: String,
++        collectionInMainDocumentChild: String,
++        nameNewDocumentChild: String,
++        paramNewDocument: PathLocation
++    ) {
++        firebaseStore.collection(mainCollectionChild).document(mainDocumentChild).collection(collectionInMainDocumentChild).document(nameNewDocumentChild).set(paramNewDocument)
++    }
++
++    override suspend fun redactNameCollection(
++        collectionChild: String,
++        documentChild: String,
++        newName: Map<Any,Any>
++    ) {
++        firebaseStore.collection(collectionChild).document(documentChild)
++            .set(newName)
++    }
++
++    override suspend fun redactNameLocation(
++        collectionChild: String,
++        documentChild: String,
++        collectionChild2: String,
++        documentChild2: String,
++        newDoc: PathLocation
++    ) {
++        firebaseStore.collection(collectionChild).document(documentChild).collection(collectionChild2).document(documentChild2).set(newDoc)
++    }
++
++    override suspend fun getNameCollection(collectionChild: String, documentChild: String) : Task<DocumentSnapshot> {
++        return withContext(ioScope.coroutineContext) {
++            firebaseStore.collection(collectionChild).document(documentChild).get()
++        }
++    }
++
++    override suspend fun getObjectAllLocation(
++        collectionChild:String,
++        documentChild:String,
++        collectionChild2:String
++    ) : Task<QuerySnapshot> {
++        return withContext(ioScope.coroutineContext){
++            firebaseStore.collection(MAIN_COLLECTION).document(MAIN_DOCUMENT).collection(LOCATE_COLLECTION)
++                .get()
++        }
++    }
++}
+\ No newline at end of file
+Index: .idea/codeStyles/Project.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/codeStyles/Project.xml	(date 1635032010852)
++++ .idea/codeStyles/Project.xml	(date 1635032010852)
+@@ -0,0 +1,139 @@
++<component name="ProjectCodeStyleConfiguration">
++  <code_scheme name="Project" version="173">
++    <JetCodeStyleSettings>
++      <option name="PACKAGES_TO_USE_STAR_IMPORTS">
++        <value>
++          <package name="java.util" alias="false" withSubpackages="false" />
++          <package name="kotlinx.android.synthetic" alias="false" withSubpackages="true" />
++          <package name="io.ktor" alias="false" withSubpackages="true" />
++        </value>
++      </option>
++      <option name="PACKAGES_IMPORT_LAYOUT">
++        <value>
++          <package name="" alias="false" withSubpackages="true" />
++          <package name="java" alias="false" withSubpackages="true" />
++          <package name="javax" alias="false" withSubpackages="true" />
++          <package name="kotlin" alias="false" withSubpackages="true" />
++          <package name="" alias="true" withSubpackages="true" />
++        </value>
++      </option>
++      <option name="CODE_STYLE_DEFAULTS" value="KOTLIN_OFFICIAL" />
++    </JetCodeStyleSettings>
++    <codeStyleSettings language="XML">
++      <option name="FORCE_REARRANGE_MODE" value="1" />
++      <indentOptions>
++        <option name="CONTINUATION_INDENT_SIZE" value="4" />
++      </indentOptions>
++      <arrangement>
++        <rules>
++          <section>
++            <rule>
++              <match>
++                <AND>
++                  <NAME>xmlns:android</NAME>
++                  <XML_ATTRIBUTE />
++                  <XML_NAMESPACE>^$</XML_NAMESPACE>
++                </AND>
++              </match>
++            </rule>
++          </section>
++          <section>
++            <rule>
++              <match>
++                <AND>
++                  <NAME>xmlns:.*</NAME>
++                  <XML_ATTRIBUTE />
++                  <XML_NAMESPACE>^$</XML_NAMESPACE>
++                </AND>
++              </match>
++              <order>BY_NAME</order>
++            </rule>
++          </section>
++          <section>
++            <rule>
++              <match>
++                <AND>
++                  <NAME>.*:id</NAME>
++                  <XML_ATTRIBUTE />
++                  <XML_NAMESPACE>http://schemas.android.com/apk/res/android</XML_NAMESPACE>
++                </AND>
++              </match>
++            </rule>
++          </section>
++          <section>
++            <rule>
++              <match>
++                <AND>
++                  <NAME>.*:name</NAME>
++                  <XML_ATTRIBUTE />
++                  <XML_NAMESPACE>http://schemas.android.com/apk/res/android</XML_NAMESPACE>
++                </AND>
++              </match>
++            </rule>
++          </section>
++          <section>
++            <rule>
++              <match>
++                <AND>
++                  <NAME>name</NAME>
++                  <XML_ATTRIBUTE />
++                  <XML_NAMESPACE>^$</XML_NAMESPACE>
++                </AND>
++              </match>
++            </rule>
++          </section>
++          <section>
++            <rule>
++              <match>
++                <AND>
++                  <NAME>style</NAME>
++                  <XML_ATTRIBUTE />
++                  <XML_NAMESPACE>^$</XML_NAMESPACE>
++                </AND>
++              </match>
++            </rule>
++          </section>
++          <section>
++            <rule>
++              <match>
++                <AND>
++                  <NAME>.*</NAME>
++                  <XML_ATTRIBUTE />
++                  <XML_NAMESPACE>^$</XML_NAMESPACE>
++                </AND>
++              </match>
++              <order>BY_NAME</order>
++            </rule>
++          </section>
++          <section>
++            <rule>
++              <match>
++                <AND>
++                  <NAME>.*</NAME>
++                  <XML_ATTRIBUTE />
++                  <XML_NAMESPACE>http://schemas.android.com/apk/res/android</XML_NAMESPACE>
++                </AND>
++              </match>
++              <order>ANDROID_ATTRIBUTE_ORDER</order>
++            </rule>
++          </section>
++          <section>
++            <rule>
++              <match>
++                <AND>
++                  <NAME>.*</NAME>
++                  <XML_ATTRIBUTE />
++                  <XML_NAMESPACE>.*</XML_NAMESPACE>
++                </AND>
++              </match>
++              <order>BY_NAME</order>
++            </rule>
++          </section>
++        </rules>
++      </arrangement>
++    </codeStyleSettings>
++    <codeStyleSettings language="kotlin">
++      <option name="CODE_STYLE_DEFAULTS" value="KOTLIN_OFFICIAL" />
++    </codeStyleSettings>
++  </code_scheme>
++</component>
+\ No newline at end of file
+Index: .idea/codeStyles/codeStyleConfig.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/codeStyles/codeStyleConfig.xml	(date 1635032010858)
++++ .idea/codeStyles/codeStyleConfig.xml	(date 1635032010858)
+@@ -0,0 +1,5 @@
++<component name="ProjectCodeStyleConfiguration">
++  <state>
++    <option name="USE_PER_PROJECT_SETTINGS" value="true" />
++  </state>
++</component>
+\ No newline at end of file
+Index: app/src/main/java/by/vashkevich/testtaskforxone/firebase/request/RequestFirebase.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/by/vashkevich/testtaskforxone/firebase/request/RequestFirebase.kt	(date 1635172661034)
++++ app/src/main/java/by/vashkevich/testtaskforxone/firebase/request/RequestFirebase.kt	(date 1635172661034)
+@@ -0,0 +1,20 @@
++package by.vashkevich.testtaskforxone.firebase.request
++
++import by.vashkevich.testtaskforxone.model.PathLocation
++import com.google.android.gms.tasks.Task
++import com.google.firebase.firestore.DocumentSnapshot
++import com.google.firebase.firestore.QuerySnapshot
++
++interface RequestFirebase {
++
++    suspend fun writeNewLocation(mainCollectionChild : String ,mainDocumentChild:String,collectionInMainDocumentChild:String,nameNewDocumentChild:String,paramNewDocument:PathLocation)
++
++    suspend fun redactNameCollection(collectionChild:String, documentChild:String,newName:Map<Any,Any>)
++
++    suspend fun redactNameLocation(collectionChild:String, documentChild:String,collectionChild2:String,documentChild2:String,newDoc:PathLocation)
++
++    suspend fun getNameCollection(collectionChild:String, documentChild:String) : Task<DocumentSnapshot>
++
++    suspend fun getObjectAllLocation(collectionChild:String, documentChild:String,collectionChild2:String) : Task<QuerySnapshot>
++
++}
+\ No newline at end of file
+Index: app/src/main/java/by/vashkevich/testtaskforxone/ui/location/LocationViewModel.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/by/vashkevich/testtaskforxone/ui/location/LocationViewModel.kt	(revision 9c4a5e5270d99e275f537dca52e9aea45a9825f7)
++++ app/src/main/java/by/vashkevich/testtaskforxone/ui/location/LocationViewModel.kt	(date 1635172661049)
+@@ -1,6 +1,109 @@
+ package by.vashkevich.testtaskforxone.ui.location
+ 
++
++import android.util.Log
++import androidx.lifecycle.LiveData
++import androidx.lifecycle.MutableLiveData
+ import androidx.lifecycle.ViewModel
++import by.vashkevich.testtaskforxone.firebase.repository.RepositoryFirebase
++import by.vashkevich.testtaskforxone.model.PathLocation
++import by.vashkevich.testtaskforxone.utilits.NAME_PARAMS
++import by.vashkevich.testtaskforxone.utilits.NEW_NAME_LOCATION
++import com.google.firebase.firestore.ktx.toObject
++import kotlinx.coroutines.CoroutineScope
++import kotlinx.coroutines.Dispatchers
++import kotlinx.coroutines.launch
+ 
+ class LocationViewModel : ViewModel() {
++
++    private val firebaseRepository = RepositoryFirebase()
++    private val ioScope = CoroutineScope(Dispatchers.IO)
++
++    private var _nameCollection = MutableLiveData<String>()
++    val nameCollection: LiveData<String> = _nameCollection
++
++//    private var _nameLocation = MutableLiveData<String>()
++//    val nameLocation: LiveData<String> = _nameLocation
++//
++//    private var _allNameLocation = MutableLiveData<List<String>>()
++//    val allNameLocation: LiveData<List<String>> = _allNameLocation
++
++    private var _allObjectCollection = MutableLiveData<List<PathLocation>>()
++    val allObjectCollection: LiveData<List<PathLocation>> = _allObjectCollection
++
++    fun writeNewLocation(
++        mainCollectionChild: String,
++        mainDocumentChild: String,
++        collectionInMainDocumentChild: String,
++        nameNewDocumentChild: String,
++        paramNewDocument: PathLocation
++    ) {
++        ioScope.launch {
++            firebaseRepository.writeNewLocation(mainCollectionChild,mainDocumentChild,collectionInMainDocumentChild,nameNewDocumentChild,paramNewDocument)
++        }
++
++    }
++
++    fun redactNameCollection(
++        collectionChild: String,
++        documentChild: String,
++        newName: Map<Any, Any>
++    ) {
++        ioScope.launch {
++            firebaseRepository.redactNameCollection(collectionChild, documentChild, newName)
++        }
++    }
++
++    fun redactNameLocation(
++        collectionChild: String,
++        documentChild: String,
++        collectionChild2: String,
++        documentChild2: String,
++        newDoc: PathLocation
++    ) {
++        ioScope.launch {
++            firebaseRepository.redactNameLocation(
++                collectionChild,
++                documentChild,
++                collectionChild2,
++                documentChild2,
++                newDoc
++            )
++        }
++    }
++
++    fun getNameCollection(collectionChild: String, documentChild: String) {
++        ioScope.launch {
++            firebaseRepository.getNameCollection(collectionChild, documentChild)
++                .addOnSuccessListener {
++                    _nameCollection.postValue(it[NAME_PARAMS].toString())
++                }
++        }
++    }
++
++    fun getObjectAllCollection(
++        collectionChild:String,
++        documentChild:String,
++        collectionChild2:String
++    ){
++        ioScope.launch {
++            val list = ArrayList<PathLocation>()
++            firebaseRepository.getObjectAllLocation(collectionChild,documentChild,collectionChild2)
++                .addOnSuccessListener { documents ->
++                    documents.documents.forEach{
++                        val pathLocation = it.toObject<PathLocation>()
++                        if (pathLocation != null) {
++                            list.add(pathLocation)
++                        }
++                        Log.d("MyLog",pathLocation.toString())
++                    }
++                    _allObjectCollection.postValue(list)
++                }
++
++        }
++    }
++
++    fun createNameLocation() : String{
++        return NEW_NAME_LOCATION + allObjectCollection.value?.size.toString()
++    }
+ }
+\ No newline at end of file
