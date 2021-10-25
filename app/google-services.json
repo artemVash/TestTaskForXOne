@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "299151878843",
+    "project_id": "testtaskforxone",
+    "storage_bucket": "testtaskforxone.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:299151878843:android:d5a3d50bdc9a0cfeaf979e",
+        "android_client_info": {
+          "package_name": "by.vashkevich.testtaskforxone"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "299151878843-d39qudpm9ja76fik5vhlh5fhpfea1m8i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDTd2RfRlzc4iuMSFL1DphyFvJeJXQ3dHw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "299151878843-d39qudpm9ja76fik5vhlh5fhpfea1m8i.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
