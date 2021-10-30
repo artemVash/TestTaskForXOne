@@ -26,7 +26,15 @@
         android:id="@+id/navigation_location"
         android:name="by.vashkevich.testtaskforxone.ui.location.LocationFragment"
         android:label="@string/title_location"
-        tools:layout="@layout/fragment_location" />
+        tools:layout="@layout/fragment_location" >
+        <action
+            android:id="@+id/showImageFragment"
+            app:destination="@id/imageFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/imageFragment"
+        android:name="by.vashkevich.testtaskforxone.ui.location.ImageFragment"
+        android:label="ImageFragment" />
 
 
 </navigation>

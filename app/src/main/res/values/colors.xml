@@ -10,5 +10,6 @@
     <color name="blue">#E3F2F4</color>
     <color name="bg_color_fragment_location">#BEFBF3EE</color>
     <color name="grey">#353535</color>
-
+    <color name="color_btn_delete_false">#CE6666</color>
+    <color name="color_btn_delete_true">#DC2727</color>
 </resources>

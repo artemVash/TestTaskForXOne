@@ -5,5 +5,7 @@
     <string name="title_dashboard">Dashboard</string>
     <string name="title_location">Location</string>
     <string name="location">локации</string>
+    <string name="name_location_hint">название локации</string>
+    <string name="delete">Удалить</string>
 
 </resources>

@@ -8,3 +8,6 @@ const val LOCATE_COLLECTION = "secondCollection"
 const val NAME_PARAMS = "name"
 
 const val NEW_NAME_LOCATION = "documentLocation"
+
+const val IMAGE_COLLECTION = "imageCollection"
+const val IMAGE_DOCUMENT = "imageDocument"
