@@ -1,39 +1,85 @@
 package by.vashkevich.testtaskforxone.adapter
 
-import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.BaseAdapter
+import android.widget.CheckBox
+import android.widget.ImageView
+import androidx.core.view.isVisible
+import androidx.navigation.findNavController
+import androidx.recyclerview.widget.RecyclerView
+import by.vashkevich.testtaskforxone.GlideApp
+import by.vashkevich.testtaskforxone.R
+import by.vashkevich.testtaskforxone.model.DataImage
+import by.vashkevich.testtaskforxone.ui.location.LocationViewModel
+import com.google.firebase.storage.FirebaseStorage
 
 class AdapterImage(
-    val context : Context,
-    val list:List<String>
-) : BaseAdapter() {
+    val item: DataImage,
+    val visible: Boolean,
+    val interfaceVisibility: VisibilityViewInterface,
+    val interfaceDelete:DeleteImageInterface,
+    val viewModel:LocationViewModel
+) : RecyclerView.Adapter<AdapterImage.ItemViewHolder>() {
 
-    override fun getCount(): Int {
-        return list.size
-    }
+    val storageReference = FirebaseStorage.getInstance().reference
+    val listImage = item.map?.values?.take(item.map.size)
+    val listDelete = ArrayList<Pair<String,String>>()
 
-    override fun getItem(position: Int): Any {
-       return list[position]
-    }
 
-    override fun getItemId(position: Int): Long {
-        return position.toLong()
-    }
+    inner class ItemViewHolder(private val view: View) : RecyclerView.ViewHolder(view) {
 
-    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+        fun setData(itemView: View, position: Int) {
 
-        var grid = View(context)
+            val data = listImage?.get(position)
 
-        if (convertView == null){
-            grid = View(context)
+            val image = itemView.findViewById<ImageView>(R.id.image_item)
 
-            var inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-//            inflater.inflate()
+            val checkBox = itemView.findViewById<CheckBox>(R.id.check_btn)
+            checkBox.isVisible = visible
+            checkBox.setOnCheckedChangeListener { compoundButton, b ->
+                val pair = item.documentLocation.toString() to data.toString()
+                if (b) {
+                    listDelete.add(pair)
+                    interfaceDelete.deleteImage(listDelete)
+                } else {
+                    listDelete.remove(pair)
+                    interfaceDelete.deleteImage(listDelete)
+                }
+            }
+
+            image.setOnLongClickListener {
+                interfaceVisibility.visibilityItem(vis = true)
+                notifyDataSetChanged()
+                true
+            }
+
+            image.setOnClickListener {
+                val pair = item.documentLocation.toString() to data.toString()
+                viewModel.setImageAll(pair)
+                view.findNavController().navigate(R.id.showImageFragment)
+            }
+
+            GlideApp.with(view.context)
+                .load(item.documentLocation?.let {
+                    storageReference.child(it).child(data.toString())
+                })
+                .into(image)
 
         }
-        return  grid
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_image_recycler, parent, false)
+        return ItemViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: ItemViewHolder, position: Int) {
+        holder.setData(holder.itemView, position)
+    }
+
+    override fun getItemCount(): Int {
+        return item.map?.size ?: 0
     }
 }

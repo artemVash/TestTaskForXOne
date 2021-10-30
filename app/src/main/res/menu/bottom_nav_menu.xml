@@ -12,6 +12,9 @@
         android:title="@string/title_money" />
 
     <item
+        android:title="" />
+
+    <item
         android:id="@+id/navigation_dashboard"
         android:icon="@drawable/image_button_dashboard"
         android:title="@string/title_dashboard" />
