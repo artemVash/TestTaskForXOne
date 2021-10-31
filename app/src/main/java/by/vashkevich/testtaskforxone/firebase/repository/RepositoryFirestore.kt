@@ -49,7 +49,7 @@ class RepositoryFirestore : RequestFirestore {
             .collection(locationCollectionChild).document(locationDocumentChild).set(newDoc)
     }
 
-    override suspend fun redactImage(
+    override suspend fun redactImageFireStore(
         mainCollectionChild: String,
         mainDocumentChild: String,
         locationCollectionChild: String,

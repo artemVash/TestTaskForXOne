@@ -16,7 +16,7 @@ class RepositoryStorage : RequestStorage {
         return withContext(ioScope.coroutineContext){storageRef.child(packageName).child(imageName).putBytes(image)}
     }
 
-    override suspend fun deleteImageStore(packageName: String, imageName: String) {
+    override suspend fun deleteImageStorage(packageName: String, imageName: String) {
         storageRef.child(packageName).child(imageName).delete()
     }
 

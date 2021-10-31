@@ -13,7 +13,7 @@ interface RequestFirestore {
 
     suspend fun redactNameLocation(mainCollectionChild:String, mainDocumentChild:String,locationCollectionChild:String,locationDocumentChild:String,newDoc:PathLocation)
 
-    suspend fun redactImage(mainCollectionChild:String, mainDocumentChild:String,locationCollectionChild:String,locationDocumentChild:String,imageCollectionChild:String,imageDocumentChild:String,image:HashMap<String,String>)
+    suspend fun redactImageFireStore(mainCollectionChild:String, mainDocumentChild:String,locationCollectionChild:String,locationDocumentChild:String,imageCollectionChild:String,imageDocumentChild:String,image:HashMap<String,String>)
 
     suspend fun getNameCollection(mainCollectionChild:String, mainDocumentChild:String) : Task<DocumentSnapshot>
 

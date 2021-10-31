@@ -6,6 +6,6 @@ interface RequestStorage {
 
     suspend fun redactImageStorage(packageName:String,imageName:String,image:ByteArray) : UploadTask
 
-    suspend fun deleteImageStore(packageName:String,imageName:String)
+    suspend fun deleteImageStorage(packageName:String,imageName:String)
 
 }

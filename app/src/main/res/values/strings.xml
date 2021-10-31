@@ -7,5 +7,6 @@
     <string name="location">локации</string>
     <string name="name_location_hint">название локации</string>
     <string name="delete">Удалить</string>
+    <string name="image">image</string>
 
 </resources>

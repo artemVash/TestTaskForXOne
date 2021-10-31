@@ -40,7 +40,7 @@ class LocationViewModel : ViewModel() {
     fun deleteImageStorage(list:List<Pair<String,String>>){
         ioScope.launch {
             list.forEach {
-                firebaseRepositoryStorage.deleteImageStore(it.first,it.second)
+                firebaseRepositoryStorage.deleteImageStorage(it.first,it.second)
             }
         }
     }
@@ -67,7 +67,6 @@ class LocationViewModel : ViewModel() {
                     updatesMap
                 )
             }
-
         }
     }
 
@@ -87,7 +86,6 @@ class LocationViewModel : ViewModel() {
                 paramNewDocument
             )
         }
-
     }
 
     fun redactNameCollection(
@@ -118,7 +116,7 @@ class LocationViewModel : ViewModel() {
         }
     }
 
-    fun redactImage(
+    fun redactImageFireStore(
         mainCollectionChild: String,
         mainDocumentChild: String,
         locationCollectionChild: String,
@@ -128,13 +126,23 @@ class LocationViewModel : ViewModel() {
         image: HashMap<String, String>
     ) {
         ioScope.launch {
-            firebaseRepository.redactImage(
+            firebaseRepository.redactImageFireStore(
                 mainCollectionChild,
                 mainDocumentChild,
                 locationCollectionChild,
                 locationDocumentChild,
                 imageCollectionChild,
                 imageDocumentChild,
+                image
+            )
+        }
+    }
+
+    fun redactImageStorage(packageName: String, imageName: String, image: ByteArray) : StorageTask<UploadTask.TaskSnapshot> {
+        return runBlocking {
+            firebaseRepositoryStorage.redactImageStorage(
+                packageName,
+                imageName,
                 image
             )
         }
@@ -170,7 +178,6 @@ class LocationViewModel : ViewModel() {
                     }
                     _allObjectCollection.postValue(list)
                 }
-
         }
     }
 
@@ -207,17 +214,6 @@ class LocationViewModel : ViewModel() {
                     }
                 }
             }
-        }
-    }
-
-    fun redactImageStorage(packageName: String, imageName: String, image: ByteArray) : StorageTask<UploadTask.TaskSnapshot> {
-        return runBlocking {
-            firebaseRepositoryStorage.redactImageStorage(
-                packageName,
-                imageName,
-                image
-            )
-
         }
     }
 

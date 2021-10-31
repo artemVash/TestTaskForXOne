@@ -22,7 +22,6 @@ class AdapterLocation(
     val interfaceAdapter: ClickButtonInterface
 ) : RecyclerView.Adapter<AdapterLocation.ItemViewHolder>() {
 
-
     var arrayImageDelete = ArrayList<Pair<String, String>>()
     var visibilityImage = false
 
@@ -56,7 +55,7 @@ class AdapterLocation(
             val addBtn = itemView.findViewById<Button>(R.id.add_image)
             addBtn.setOnClickListener {
 
-                val imageName = System.currentTimeMillis().toString() + "image"
+                val imageName = System.currentTimeMillis().toString() + view.context.resources.getString(R.string.image)
 
                 data.documentLocation?.let { it1 -> interfaceAdapter.onBth(imageName, it1) }
 
@@ -64,7 +63,7 @@ class AdapterLocation(
                     val x = HashMap<String,String>()
                     x[imageName] = imageName
                     data.documentLocation?.let { it1 ->
-                        viewModel.redactImage(
+                        viewModel.redactImageFireStore(
                             MAIN_COLLECTION, MAIN_DOCUMENT, LOCATE_COLLECTION, it1,
                             IMAGE_COLLECTION, IMAGE_DOCUMENT, x
                         )
@@ -74,7 +73,7 @@ class AdapterLocation(
                     x[imageName] = imageName
 
                     data.documentLocation?.let { it1 ->
-                        viewModel.redactImage(
+                        viewModel.redactImageFireStore(
                             MAIN_COLLECTION, MAIN_DOCUMENT, LOCATE_COLLECTION, it1,
                             IMAGE_COLLECTION, IMAGE_DOCUMENT, x
                         )

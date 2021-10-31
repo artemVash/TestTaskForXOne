@@ -6,7 +6,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -95,17 +94,12 @@ class LocationFragment : Fragment(),ClickButtonInterface {
         activityFromResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result ->
             if (result.resultCode == Activity.RESULT_OK){
 
-                val bitmap = result.data?.data?.let { getBitmap(it) }
-                if (bitmap != null) {
-                    val  stream = ByteArrayOutputStream()
-                    bitmap.compress(Bitmap.CompressFormat.PNG,100,stream)
-                    val imageBytes = stream.toByteArray()
+                val byteArray = result.data?.data?.let { getByteArray(it) }
+                if (byteArray != null) {
 
-                    locationViewModel.redactImageStorage(locDoc,imageName,imageBytes).addOnCompleteListener {
+                    locationViewModel.redactImageStorage(locDoc,imageName,byteArray).addOnCompleteListener {
                         if (it.isSuccessful) locationAdapter.notifyDataSetChanged()
                     }
-
-
                 }
 
             }
@@ -123,11 +117,11 @@ class LocationFragment : Fragment(),ClickButtonInterface {
         activityFromResult.launch(intent)
     }
 
-     private fun getBitmap(uri : Uri) : Bitmap {
+     private fun getByteArray(uri : Uri) : ByteArray {
          val imageStream =context?.contentResolver?.openInputStream(uri)
          val bitmap = BitmapFactory.decodeStream(imageStream)
          val boas = ByteArrayOutputStream()
          bitmap.compress(Bitmap.CompressFormat.JPEG,100,boas)
-        return bitmap
+         return boas.toByteArray()
     }
 }
